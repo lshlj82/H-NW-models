@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The same graph, invented twice — Harary vs Newman–Watts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300..700;1,7..72,400&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F3; --plane:#F8F9FB; --ink:#1A2332; --muted:#5A6475; --rule:#C7CED8;
+  --orig:#B5650A; --nx:#2E52A8; --rand:#C8342B;
+  --serif:"Literata", "Iowan Old Style", Georgia, serif;
+  --ui:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111821; --plane:#17202C; --ink:#E2E7EE; --muted:#99A3B3; --rule:#2B3645;
+    --orig:#EBA24A; --nx:#88A6F2; --rand:#F2705F;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111821; --plane:#17202C; --ink:#E2E7EE; --muted:#99A3B3; --rule:#2B3645;
+  --orig:#EBA24A; --nx:#88A6F2; --rand:#F2705F;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+main{max-width:1120px;margin:0 auto;padding:3.5rem 1.5rem 5rem}
+header.top{max-width:760px;margin-bottom:2.5rem}
+h1{font-weight:380;font-size:clamp(2.4rem,6.4vw,4.4rem);line-height:1.02;letter-spacing:-0.025em;margin:0 0 1.2rem;font-variation-settings:"opsz" 72}
+h1 .yr{font-family:var(--ui);font-size:.34em;letter-spacing:0;font-weight:500;color:var(--muted);vertical-align:.9em;margin-left:.2em}
+.lede{font-size:1.14rem;max-width:62ch;margin:0 0 .8rem}
+.cite{font-family:var(--ui);font-size:.86rem;color:var(--muted);margin:0}
+.cite a{color:inherit}
+.key{font-family:var(--ui);font-size:.86rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;margin-top:1.2rem}
+.sw{display:inline-block;vertical-align:middle;margin-right:.45rem;line-height:0}
+.sw svg{display:block;overflow:visible}
+section{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:0 1.5rem;padding:3rem 0;border-top:1px solid var(--rule)}
+.rail{font-family:var(--ui);font-size:.88rem;color:var(--muted);padding-top:.45rem}
+h2{font-weight:450;font-size:1.85rem;line-height:1.15;letter-spacing:-0.012em;margin:0 0 .7rem}
+p{margin:0 0 .9rem;max-width:66ch}
+.fig{background:var(--plane);border:1px solid var(--rule);border-radius:6px;padding:1rem;margin-top:1.2rem}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem 1rem}
+.rowlabel{grid-column:1/-1;font-family:var(--ui);font-size:.82rem;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:.3rem;margin-top:.2rem}
+.eqbox{padding:1.1rem 1.2rem}
+.eqlab{font-size:.98rem;margin:.2rem 0 .1rem}
+.eqnote{font-size:.92rem;color:var(--muted);margin:.9rem 0 0}
+.mathscroll{overflow-x:auto;padding:.3rem 0 .5rem}
+math{font-family:"Latin Modern Math","STIX Two Math","Cambria Math","Libertinus Math",serif;font-size:1.08em}
+math[display="block"]{margin:.3rem 0}
+.eqnote math{font-size:.95em}
+.refs{margin:1.2rem 0 0;padding-left:1.4rem}
+.refs li{margin-bottom:.35rem}
+.refs a{color:inherit}
+sup.c a{color:var(--muted);text-decoration:none;font-family:var(--ui);font-size:.75em}
+.panel h3{font-family:var(--ui);font-size:.95rem;font-weight:600;margin:0 0 .15rem}
+.panel .sub{font-family:var(--ui);font-size:.8rem;color:var(--muted);margin:0 0 .4rem}
+canvas{display:block;width:100%}
+canvas.ring{aspect-ratio:1/1;max-height:440px}
+canvas.chart{aspect-ratio:16/9;min-height:260px}
+canvas.cloud{aspect-ratio:5/4;min-height:260px}
+.stats{font-family:var(--ui);font-size:.9rem;font-variant-numeric:tabular-nums;display:flex;gap:1.2rem;margin-top:.3rem}
+.stats b{font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:1rem 2rem;align-items:flex-end;font-family:var(--ui);font-size:.9rem;margin-top:1rem}
+.ctl{display:flex;flex-direction:column;gap:.25rem;min-width:180px;flex:1 1 200px}
+.ctl label{color:var(--muted)}
+.ctl output{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:.4rem}
+input[type=range]{width:100%;accent-color:var(--ink)}
+select,button{font-family:var(--ui);font-size:.9rem;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:.45rem .8rem}
+button{cursor:pointer;font-weight:500}
+button:hover{border-color:var(--ink)}
+:focus-visible{outline:2px solid var(--nx);outline-offset:2px}
+.case{font-family:var(--ui);font-size:.95rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--rule)}
+.case .tag{display:inline-block;font-weight:600;border:1px solid var(--ink);border-radius:3px;padding:0 .4rem;margin-right:.5rem;font-variant-numeric:tabular-nums}
+.legend{font-family:var(--ui);font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem 1.3rem;margin-top:.6rem}
+.readout{font-family:var(--ui);font-size:.92rem;font-variant-numeric:tabular-nums;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin-top:1rem}
+.readout div{border-left:2px solid var(--rule);padding-left:.7rem}
+.readout .k{color:var(--muted);font-size:.8rem;display:block}
+.readout .v{font-size:1.15rem;font-weight:600}
+.progress{font-family:var(--ui);font-size:.82rem;color:var(--muted);min-height:1.2em}
+.formula{font-family:var(--serif);font-style:italic;font-size:1.25rem;margin:.6rem 0 1rem}
+.mapping{font-family:var(--ui);font-size:.95rem;margin-top:1rem;padding:.8rem 1rem;border:1px dashed var(--rule);border-radius:4px}
+.chk{display:flex;align-items:center;gap:.45rem;color:var(--muted)}
+footer{font-family:var(--ui);font-size:.82rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:1.5rem;max-width:70ch}
+@media (max-width:760px){
+  main{padding:2.2rem 1rem 4rem}
+  section{grid-template-columns:1fr}
+  .rail{padding:0 0 .3rem}
+  .twin,.quad{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <h1>The same graph, invented twice</h1>
+  <p class="lede">Frank Harary built it in 1962 to make a graph as hard to disconnect as possible. Newman and Watts built it in 1999 to make a small world. Under one condition on the parameters, they are the same random graph, and the popular NetworkX versions of both quietly differ from the originals.</p>
+  <p class="cite">An interactive companion to<sup class="c"><a href="#ref-son">[1]</a></sup> S. Son, E. J. Choi &amp; S. H. Lee, “Revisiting small-world network models,” <i>J. Korean Phys. Soc.</i> 83, 879–889 (2023). <a href="https://doi.org/10.1007/s40042-023-00921-8">doi:10.1007/s40042-023-00921-8</a></p>
+  <div class="key">
+    <span style="color:var(--orig)"><i class="sw" data-k="line"></i>original model, as published</span>
+    <span style="color:var(--nx)"><i class="sw" data-k="line" data-d="6 4"></i>NetworkX implementation</span>
+    <span style="color:var(--rand)"><i class="sw" data-k="line"></i>randomly placed edge</span>
+  </div>
+</header>
+
+<!-- §2 -->
+<section id="harary">
+  <div class="rail">§2.1–2.2</div>
+  <div>
+    <h2>Harary’s rule: fill the ring, scatter the rest</h2>
+    <p>Given <i>n</i> nodes and <i>m</i> edges, the best possible connectivity is <i>r</i> = ⌊2<i>m</i>/<i>n</i>⌋. Harary builds that graph deterministically from rings and diameters, then places any leftover edges uniformly at random. NetworkX’s <code>hnm_harary_graph</code> keeps the first step but puts the leftovers in fixed positions, so every (<i>n</i>, <i>m</i>) gives exactly one graph.<sup class="c"><a href="#ref-harary">[2]</a></sup></p>
+    <p>The bottom row shows the Newman–Watts graphs<sup class="c"><a href="#ref-nw">[3]</a></sup> that correspond to the same (<i>n</i>, <i>m</i>) under the mapping of §4: a ring of degree <i>k</i><sub>init</sub> = <i>r</i>, plus shortcuts added with <i>p</i> = 2<i>m</i>/(<i>nr</i>) − 1. The mapping needs <i>r</i> to be even; Newman–Watts reaches <i>m</i> only on average, so the edge count of each draw is shown.</p>
+    <div class="fig">
+      <div class="quad">
+        <div class="rowlabel">Harary graph, <i>n</i> nodes and exactly <i>m</i> edges</div>
+        <div class="panel">
+          <h3>Original Harary (OH)</h3>
+          <p class="sub">Leftover edges placed at random</p>
+          <canvas class="ring" id="cvOH" aria-label="Original Harary graph drawn on a circle"></canvas>
+          <div class="stats"><span>C <b id="ohC">–</b></span><span>L <b id="ohL">–</b></span><span>m <b id="ohM">–</b></span></div>
+        </div>
+        <div class="panel">
+          <h3>NetworkX Harary (XH)</h3>
+          <p class="sub">Leftover edges placed deterministically</p>
+          <canvas class="ring" id="cvXH" aria-label="NetworkX Harary graph drawn on a circle"></canvas>
+          <div class="stats"><span>C <b id="xhC">–</b></span><span>L <b id="xhL">–</b></span><span>m <b id="xhM">–</b></span></div>
+        </div>
+        <div class="rowlabel" id="nwRow">Corresponding Newman–Watts graph</div>
+        <div class="panel">
+          <h3>Original Newman–Watts (ONW)</h3>
+          <p class="sub" id="onwSub"></p>
+          <canvas class="ring" id="cvONW" aria-label="Corresponding original Newman–Watts graph drawn on a circle"></canvas>
+          <div class="stats"><span>C <b id="onC">–</b></span><span>L <b id="onL">–</b></span><span>m <b id="onM">–</b></span></div>
+        </div>
+        <div class="panel">
+          <h3>NetworkX Newman–Watts (XNW)</h3>
+          <p class="sub" id="xnwSub"></p>
+          <canvas class="ring" id="cvXNW" aria-label="Corresponding NetworkX Newman–Watts graph drawn on a circle"></canvas>
+          <div class="stats"><span>C <b id="xnC">–</b></span><span>L <b id="xnL">–</b></span><span>m <b id="xnM">–</b></span></div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="ctl"><label for="hn">Nodes <i>n</i><output id="hnO"></output></label><input type="range" id="hn" min="6" max="40" value="16"></div>
+        <div class="ctl"><label for="hm">Edges <i>m</i><output id="hmO"></output></label><input type="range" id="hm" min="6" max="120" value="35"></div>
+        <button id="hRe">Resample random graphs</button>
+      </div>
+      <div class="case" id="hCase"></div>
+      <div class="legend">
+        <span style="color:var(--ink)"><i class="sw" data-k="line" data-a=".5" data-w="1.2"></i>deterministic core (rings and diameters)</span>
+        <span style="color:var(--rand)"><i class="sw" data-k="line" data-w="2.2"></i>randomly placed edges (OH leftovers, NW shortcuts)</span>
+        <span style="color:var(--nx)"><i class="sw" data-k="line" data-w="2.2"></i>XH leftovers in fixed positions</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Fig 2 -->
+<section id="cloud">
+  <div class="rail">Fig. 2</div>
+  <div>
+    <h2>Randomness buys a much wider range of graphs</h2>
+    <p>Here <i>n</i> = 64 and <i>m</i> runs over every integer from 256 to 2015 (so <i>r</i> goes from 8 to 62), matching the paper and the neural-network search study it critiques. NetworkX gives one point per <i>m</i>; the original rule, drawn ten times per <i>m</i>, fans out across the clustering–path-length plane.</p>
+    <div class="fig">
+      <div class="twin">
+        <div class="panel"><h3>XH: 1,760 graphs</h3><canvas class="cloud" id="cvCloudX" aria-label="Scatter of clustering against path length for NetworkX Harary graphs"></canvas></div>
+        <div class="panel"><h3>OH: 17,600 graphs</h3><canvas class="cloud" id="cvCloudO" aria-label="Scatter of clustering against path length for original Harary graphs"></canvas></div>
+      </div>
+      <div class="controls" style="justify-content:space-between">
+        <span class="progress" id="cloudProg">Scroll here to generate.</span>
+        <button id="cloudRun">Regenerate</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §3 -->
+<section id="degree">
+  <div class="rail">§3.1–3.3</div>
+  <div>
+    <h2>Two ways to add a shortcut</h2>
+    <p>In the original Newman–Watts model (ONW), each of the <i>n k</i>/2 ring edges triggers, with probability <i>p</i>, a shortcut between a uniformly random pair of nodes. In NetworkX’s <code>newman_watts_strogatz_graph</code> (XNW), the shortcut must start at an endpoint of the ring edge that triggered it, so every node gets a fixed number of attempts. The average degree is the same; its spread is not.</p>
+    <div class="fig">
+      <canvas class="chart" id="cvDeg" aria-label="Degree distributions of the two Newman–Watts versions"></canvas>
+      <div class="legend">
+        <span style="color:var(--orig)"><i class="sw" data-k="line"></i>ONW</span>
+        <span style="color:var(--nx)"><i class="sw" data-k="line" data-d="6 4"></i>XNW</span>
+        <span style="color:var(--muted)"><i class="sw" data-k="vline" data-d="2 4"></i>original ring degree <i>k</i><sub>init</sub></span>
+      </div>
+      <div class="controls">
+        <div class="ctl"><label for="dn">Nodes <i>n</i><output id="dnO"></output></label><input type="range" id="dn" min="50" max="300" step="10" value="100"></div>
+        <div class="ctl"><label for="dk">Ring degree <i>k</i><sub>init</sub><output id="dkO"></output></label><input type="range" id="dk" min="2" max="60" step="2" value="4"></div>
+        <div class="ctl"><label for="dp">Probability <i>p</i><output id="dpO"></output></label><input type="range" id="dp" min="0" max="1" step="0.05" value="1"></div>
+      </div>
+      <div class="readout">
+        <div><span class="k">Std. dev. of degree, ONW</span><span class="v" id="dSo">–</span></div>
+        <div><span class="k">Std. dev. of degree, XNW</span><span class="v" id="dSx">–</span></div>
+        <div><span class="k">Nodes still at <i>k</i><sub>init</sub> (ONW / XNW)</span><span class="v" id="dKeep">–</span></div>
+        <div><span class="k"><i>s</i> = <i>k</i>/(<i>n</i>−1−<i>k</i>)</span><span class="v" id="dS">–</span></div>
+      </div>
+      <p class="progress" id="dMsg" style="margin-top:.8rem"></p>
+    </div>
+  </div>
+</section>
+
+<!-- §3.4 -->
+<section id="clust">
+  <div class="rail">§3.4, Figs. 3–4</div>
+  <div>
+    <h2>Clustering turns back up</h2>
+    <p>Unlike Watts–Strogatz rewiring, Newman–Watts keeps adding edges. In a dense ring, shortcuts eventually close triangles faster than they open new triads, so average clustering <i>C</i> dips and then rises. Newman’s textbook approximation<sup class="c"><a href="#ref-newman">[4]</a></sup> ignores triangles made by shortcuts, and Jo’s correction<sup class="c"><a href="#ref-jo">[5]</a></sup> adds those closed by a single shortcut but drops the O(<i>p</i>²) terms. The paper’s Eq. (6) counts triangles made by one, two and three shortcuts and catches the upturn. Try <i>k</i><sub>init</sub> = 4 to see it vanish.</p>
+    <div class="fig eqbox" aria-label="Formula for the relative clustering coefficient">
+      <p class="eqlab">Eq. (6) of the paper, for the original Newman–Watts model with <i>n</i> nodes and ring degree <i>k</i><sub>init</sub>:</p>
+      <div class="mathscroll"><math display="block"><mrow><msub><mi>C</mi><mi>p</mi></msub><mo>=</mo><mn>3</mn><mfrac><mrow><mfrac><mrow><mi>n</mi><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>4</mn></mrow></mfrac><mrow><mo lspace="0" rspace="0">(</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>2</mn></mrow></mfrac><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mo>+</mo><mrow><mo lspace="0" rspace="0">(</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>2</mn></mrow></mfrac><mo>+</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>4</mn></mrow></mfrac><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub><mi>p</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn><mo>−</mo><msub><mi>k</mi><mtext>init</mtext></msub></mrow></mfrac><mi>n</mi><mo>+</mo><mfrac><mrow><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mi>n</mi></mrow></mfrac><mi>n</mi><mo>+</mo><mfrac><mrow><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mrow><mo lspace="0" rspace="0">(</mo><mn>1</mn><mo>−</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mi>n</mi></mrow></mfrac><mo lspace="0" rspace="0">)</mo></mrow><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub><mi>p</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn><mo>−</mo><msub><mi>k</mi><mtext>init</mtext></msub></mrow></mfrac><mi>n</mi></mrow><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>n</mi><msub><mi>k</mi><mtext>init</mtext></msub><mrow><mo lspace="0" rspace="0">(</mo><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mo>+</mo><mi>n</mi><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><mi>p</mi><mo>+</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>n</mi><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow></mfrac></mrow></math></div>
+      <p class="eqlab">Its value at <i>p</i> = 0 is the clustering of the bare ring,</p>
+      <div class="mathscroll"><math display="block"><mrow><msub><mi>C</mi><mn>0</mn></msub><mo>=</mo><msub><mi>C</mi><mi>p</mi></msub><msub><mo>|</mo><mrow><mi>p</mi><mo>=</mo><mn>0</mn></mrow></msub><mo>=</mo><mfrac><mrow><mn>3</mn><mrow><mo lspace="0" rspace="0">(</mo><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>2</mn><mo lspace="0" rspace="0">)</mo></mrow></mrow><mrow><mn>4</mn><mrow><mo lspace="0" rspace="0">(</mo><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow></mrow></mfrac></mrow></math></div>
+      <p class="eqlab">so the curve plotted below is</p>
+      <div class="mathscroll"><math display="block"><mrow><mfrac><mrow><msub><mi>C</mi><mi>p</mi></msub></mrow><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>4</mn><mrow><mo lspace="0" rspace="0">(</mo><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow></mrow><mrow><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>2</mn></mrow></mfrac><mo>·</mo><mfrac><mrow><mfrac><mrow><mi>n</mi><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>4</mn></mrow></mfrac><mrow><mo lspace="0" rspace="0">(</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>2</mn></mrow></mfrac><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mo>+</mo><mrow><mo lspace="0" rspace="0">(</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>2</mn></mrow></mfrac><mo>+</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mn>4</mn></mrow></mfrac><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub><mi>p</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn><mo>−</mo><msub><mi>k</mi><mtext>init</mtext></msub></mrow></mfrac><mi>n</mi><mo>+</mo><mfrac><mrow><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mi>n</mi></mrow></mfrac><mi>n</mi><mo>+</mo><mfrac><mrow><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mrow><mo lspace="0" rspace="0">(</mo><mn>1</mn><mo>−</mo><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub></mrow><mrow><mi>n</mi></mrow></mfrac><mo lspace="0" rspace="0">)</mo></mrow><mfrac><mrow><msub><mi>k</mi><mtext>init</mtext></msub><mi>p</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn><mo>−</mo><msub><mi>k</mi><mtext>init</mtext></msub></mrow></mfrac><mi>n</mi></mrow><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>n</mi><msub><mi>k</mi><mtext>init</mtext></msub><mrow><mo lspace="0" rspace="0">(</mo><msub><mi>k</mi><mtext>init</mtext></msub><mo>−</mo><mn>1</mn><mo lspace="0" rspace="0">)</mo></mrow><mo>+</mo><mi>n</mi><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><mi>p</mi><mo>+</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>n</mi><msubsup><mi>k</mi><mtext>init</mtext><mn>2</mn></msubsup><msup><mi>p</mi><mn>2</mn></msup></mrow></mfrac></mrow></math></div>
+      <p class="eqnote">Reading the numerator from left to right, the four terms count triangles already in the ring, triangles closed by one shortcut, by two shortcuts, and by three shortcuts; the denominator counts connected triples. Keeping only the first numerator term gives Newman’s approximation, Eq. (A1); keeping the first two gives the one-shortcut (Jo-type) curve. As printed in the paper, the last denominator term of Eq. (A1) lacks the factor <i>n</i> that appears in Eq. (6); the demo uses Eq. (6)’s denominator for all three curves.</p>
+    </div>
+    <div class="fig">
+      <canvas class="chart" id="cvCl" aria-label="Relative clustering against p for simulations and approximations"></canvas>
+      <div class="legend">
+        <span style="color:var(--orig)"><i class="sw" data-k="dot" data-r="3.6" data-err="1"></i>ONW simulation (±1 s.d.)</span>
+        <span style="color:var(--nx)"><i class="sw" data-k="dot" data-r="2.4"></i>XNW simulation</span>
+        <span style="color:var(--ink)"><i class="sw" data-k="line" data-w="1.8"></i>Eq. (6), all terms (Son et al.)</span>
+        <span style="color:var(--ink)"><i class="sw" data-k="line" data-d="2 3" data-w="1.5"></i>Eq. (6), one-shortcut term only (Jo-type)</span>
+        <span style="color:var(--muted)"><i class="sw" data-k="line" data-d="7 3 2 3" data-w="1.5"></i>Newman’s approximation, Eq. (A1)</span>
+        <span id="lLeg" hidden><span style="color:var(--orig)"><i class="sw" data-k="diamond" data-r="4"></i></span><span style="color:var(--nx)"><i class="sw" data-k="diamond" data-f="1" data-r="3"></i></span>relative path length <i>L<sub>p</sub></i>/<i>L</i><sub>0</sub> (ONW, XNW)</span>
+      </div>
+      <div class="controls">
+        <div class="ctl" style="flex:0 1 220px"><label for="ck">Ring degree <i>k</i><sub>init</sub>, with <i>n</i> = 100</label>
+          <select id="ck"><option>4</option><option>10</option><option>20</option><option selected>40</option><option>60</option></select></div>
+        <label class="chk"><input type="checkbox" id="cL"> Also plot path length</label>
+        <span class="progress" id="clProg" style="margin-left:auto"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- §4 -->
+<section id="equiv">
+  <div class="rail">§4, Fig. 5</div>
+  <div>
+    <h2>The equivalence</h2>
+    <p>Harary’s case 3a with an even <i>r</i> is a ring of degree <i>r</i> plus <i>m</i> − <i>rn</i>/2 edges placed uniformly at random. The original Newman–Watts model is a ring of degree <i>k</i><sub>init</sub> plus, on average, <i>p n k</i><sub>init</sub>/2 edges placed uniformly at random. Match the two:</p>
+    <p class="formula">k<sub>init</sub> = r, &nbsp;&nbsp; p = 2m / (n r) − 1</p>
+    <p>The only difference left is that Newman–Watts hits that edge count on average while Harary hits it exactly. Below, 150 graphs of each kind per point, <i>n</i> = 50.</p>
+    <div class="fig">
+      <canvas class="chart" id="cvEq" aria-label="Relative clustering and path length of the Harary and Newman–Watts models against m"></canvas>
+      <div class="legend">
+        <span style="color:var(--ink)"><i class="sw" data-k="ring" data-r="4.2"></i>OH <i>C<sub>m</sub></i>/<i>C</i><sub>0</sub></span>
+        <span style="color:var(--ink)"><i class="sw" data-k="plus" data-r="5"></i>OH <i>L<sub>m</sub></i>/<i>L</i><sub>0</sub></span>
+        <span style="color:var(--orig)"><i class="sw" data-k="dot" data-r="3.6"></i>ONW <i>C<sub>p</sub></i>/<i>C</i><sub>0</sub></span>
+        <span style="color:var(--orig)"><i class="sw" data-k="cross" data-r="5"></i>ONW <i>L<sub>p</sub></i>/<i>L</i><sub>0</sub></span>
+      </div>
+      <div class="controls">
+        <div class="ctl" style="flex:0 1 200px"><label for="er">Harary <i>r</i> = <i>k</i><sub>init</sub></label>
+          <select id="er"><option>2</option><option selected>4</option><option>6</option><option>8</option></select></div>
+        <span class="progress" id="eqProg" style="margin-left:auto"></span>
+      </div>
+      <div class="mapping" id="eqMap"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>All graphs are generated in your browser. NetworkX behaviour follows the source of version 3.1 as described in the paper. Following the paper, the original Newman–Watts model here disallows self-loops and multi-edges; the number of shortcuts is binomial with <i>n k</i>/2 trials. <i>C</i> is the average local clustering coefficient (nodes of degree below 2 count as zero) and <i>L</i> the average shortest path length.</p>
+  <ol class="refs">
+    <li id="ref-son">S. Son, E. J. Choi, S. H. Lee, Revisiting small-world network models: exploring technical realizations and the equivalence of the Newman–Watts and Harary models, <i>J. Korean Phys. Soc.</i> <b>83</b>, 879 (2023). <a href="https://doi.org/10.1007/s40042-023-00921-8">doi:10.1007/s40042-023-00921-8</a></li>
+    <li id="ref-harary">F. Harary, The maximum connectivity of a graph, <i>Proc. Natl. Acad. Sci. USA</i> <b>48</b>, 1142 (1962).</li>
+    <li id="ref-nw">M. E. J. Newman, D. J. Watts, Renormalization group analysis of the small-world network model, <i>Phys. Lett. A</i> <b>263</b>, 341 (1999).</li>
+    <li id="ref-newman">M. E. J. Newman, <i>Networks: An Introduction</i> (Oxford University Press, Oxford, 2010). The clustering derivation is omitted from the 2nd edition (2018).</li>
+    <li id="ref-jo">H.-H. Jo, <i>Sandpiles on small-world networks</i>, Master’s thesis, Korea Advanced Institute of Science and Technology (2001). <a href="https://koasas.kaist.ac.kr/handle/10203/48565">koasas.kaist.ac.kr/handle/10203/48565</a></li>
+    <li id="ref-nx">A. A. Hagberg, D. A. Schult, P. J. Swart, Exploring network structure, dynamics, and function using NetworkX, in <i>Proc. 7th Python in Science Conf. (SciPy 2008)</i>, pp. 11–15. <a href="https://networkx.org">networkx.org</a></li>
+  </ol>
+</footer>
+</main>
+
+<script>
+/* ---------- graph core (bitset adjacency) ---------- */
+const rnd = n => Math.floor(Math.random()*n);
+function popc(x){x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);return(((x+(x>>>4))&0x0F0F0F0F)*0x01010101)>>>24;}
+class G{
+  constructor(n){this.n=n;this.W=(n+31)>>>5;this.rows=new Uint32Array(n*this.W);this.deg=new Int32Array(n);this.m=0;this.edges=[];}
+  has(u,v){return (this.rows[u*this.W+(v>>>5)]>>>(v&31))&1;}
+  add(u,v,t){
+    if(u===v||this.has(u,v))return false;
+    this.rows[u*this.W+(v>>>5)]|=1<<(v&31);this.rows[v*this.W+(u>>>5)]|=1<<(u&31);
+    this.deg[u]++;this.deg[v]++;this.m++;this.edges.push([u,v,t]);return true;
+  }
+}
+function ring(g,h){const n=g.n;for(let i=0;i<n;i++)for(let j=1;j<=h;j++)g.add(i,(i+j)%n,'ring');}
+function diam(g){const h=g.n/2;for(let i=0;i<h;i++)g.add(i,i+h,'diam');}
+function nearDiam(g,rot){const n=g.n,h=(n-1)/2;for(let i=0;i<=h;i++)g.add((i+rot)%n,(i+h+rot)%n,'diam');}
+function addRandom(g,c,tag){
+  const n=g.n,total=n*(n-1)/2;
+  c=Math.min(c,total-g.m); if(c<=0)return;
+  if(g.m+c<0.5*total){
+    let k=0;while(k<c){const u=rnd(n),v=rnd(n);if(g.add(u,v,tag))k++;}
+  }else{
+    const L=[];for(let u=0;u<n;u++)for(let v=u+1;v<n;v++)if(!g.has(u,v))L.push(u*n+v);
+    for(let i=0;i<c;i++){const j=i+rnd(L.length-i);const t=L[i];L[i]=L[j];L[j]=t;g.add((L[i]/n)|0,L[i]%n,tag);}
+  }
+}
+function binom(N,p){if(p>=1)return N;if(p<=0)return 0;let k=0;for(let i=0;i<N;i++)if(Math.random()<p)k++;return k;}
+
+/* Original Harary (Harary 1962, as listed in §2.1) */
+function OH(n,m){
+  const g=new G(n),r=Math.floor(2*m/n),q=(2*m)%n,rot=rnd(n);let cs;
+  if(q===0){ if(r%2===0){ring(g,r/2);cs='1a';} else {ring(g,(r-1)/2);diam(g);cs='1b';} }
+  else if(q===1){ ring(g,(r-1)/2);nearDiam(g,rot);cs='2'; }
+  else if(q%2===0){ if(r%2===0)ring(g,r/2); else {ring(g,(r-1)/2);diam(g);} addRandom(g,q/2,'extra');cs='3a'; }
+  else { ring(g,(r-1)/2);nearDiam(g,rot);addRandom(g,(q-1)/2,'extra');cs='3b'; }
+  g.cs=cs;g.r=r;g.q=q;return g;
+}
+/* NetworkX hnm_harary_graph (v3.1 logic) */
+function XH(n,m){
+  const g=new G(n),d=Math.floor(2*m/n);
+  if(n%2===0||d%2===0){
+    const off=Math.floor(d/2);ring(g,off);
+    if(d&1){const h=n/2;for(let i=0;i<h;i++)g.add(i,i+h,'diam');}
+    const rr=(2*m)%n;for(let i=0;i<Math.floor(rr/2);i++)g.add(i,i+off+1,'left');
+  }else{
+    const off=(d-1)/2;ring(g,off);const h=Math.floor(n/2),nd=(n+1)/2;
+    for(let i=0;i<m-n*off;i++)g.add(i,(i+h)%n,i<nd?'diam':'left');
+  }
+  return g;
+}
+/* Original Newman–Watts: ring + Binomial(nk/2, p) uniformly random new edges */
+function ONW(n,k,p){const g=new G(n);ring(g,k/2);addRandom(g,binom(n*k/2,p),'extra');return g;}
+/* NetworkX newman_watts_strogatz_graph (v3.1 logic) */
+function XNW(n,k,p){
+  const g=new G(n);ring(g,k/2);
+  const E=g.edges.map(e=>e[0]<e[1]?[e[0],e[1]]:[e[1],e[0]]).sort((a,b)=>a[0]-b[0]);
+  for(const [u] of E){
+    if(Math.random()<p){
+      let w=rnd(n),ok=true;
+      while(w===u||g.has(u,w)){w=rnd(n);if(g.deg[u]>=n-1){ok=false;break;}}
+      if(ok)g.add(u,w,'extra');
+    }
+  }
+  return g;
+}
+function clustering(g){
+  const{n,W,rows,deg}=g;let s=0;
+  for(let v=0;v<n;v++){
+    const d=deg[v];if(d<2)continue;const b=v*W;let t=0;
+    for(let w=0;w<W;w++){let x=rows[b+w];
+      while(x){const lb=x&-x;const u=(w<<5)+(31-Math.clz32(lb));x^=lb;const ub=u*W;
+        for(let k=0;k<W;k++)t+=popc(rows[b+k]&rows[ub+k]);}}
+    s+=t/(d*(d-1));
+  }
+  return s/n;
+}
+function pathLength(g){
+  const{n,W,rows}=g;const vis=new Uint32Array(W),fr=new Uint32Array(W),nx=new Uint32Array(W);let tot=0,pairs=0;
+  for(let s=0;s<n;s++){
+    vis.fill(0);fr.fill(0);vis[s>>>5]|=1<<(s&31);fr[s>>>5]|=1<<(s&31);let dist=0;
+    for(;;){
+      nx.fill(0);
+      for(let w=0;w<W;w++){let x=fr[w];while(x){const lb=x&-x;const u=(w<<5)+(31-Math.clz32(lb));x^=lb;const ub=u*W;for(let k=0;k<W;k++)nx[k]|=rows[ub+k];}}
+      let c=0;for(let k=0;k<W;k++){nx[k]&=~vis[k];vis[k]|=nx[k];c+=popc(nx[k]);}
+      if(!c)break;dist++;tot+=dist*c;pairs+=c;fr.set(nx);
+    }
+  }
+  return pairs?tot/pairs:NaN;
+}
+
+/* ---------- drawing helpers ---------- */
+const css=()=>{const s=getComputedStyle(document.documentElement);const g=k=>s.getPropertyValue(k).trim();
+  return{ink:g('--ink'),muted:g('--muted'),rule:g('--rule'),orig:g('--orig'),nx:g('--nx'),rand:g('--rand'),plane:g('--plane')};};
+const UI='"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+function prep(c){const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);return{x,w,h};}
+function niceTicks(a,b,cnt=5){const st0=(b-a)/cnt,mag=10**Math.floor(Math.log10(st0)),r=st0/mag;const step=(r<1.5?1:r<3?2:r<7?5:10)*mag;const t=[];for(let v=Math.ceil(a/step-1e-9)*step;v<=b+1e-9;v+=step)t.push(+v.toFixed(10));return{t,step};}
+const fmt=(v,step)=>v.toFixed(Math.max(0,-Math.floor(Math.log10(step)+1e-9)));
+const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const sup=e=>String(e).split('').map(ch=>SUP[ch]).join('');
+
+function chart(c,o){
+  const{x,w,h}=prep(c),C=css();const P={l:54,r:12,t:12,b:44};const iw=w-P.l-P.r,ih=h-P.t-P.b;
+  const[x0,x1]=o.xlim,[y0,y1]=o.ylim;
+  const X=o.xlog?v=>P.l+(Math.log10(v)-Math.log10(x0))/(Math.log10(x1)-Math.log10(x0))*iw:v=>P.l+(v-x0)/(x1-x0)*iw;
+  const Y=v=>P.t+(1-(v-y0)/(y1-y0))*ih;
+  x.font=`12px ${UI}`;x.lineWidth=1;
+  const yt=niceTicks(y0,y1,5);x.textAlign='right';x.textBaseline='middle';
+  for(const v of yt.t){const yy=Math.round(Y(v))+.5;x.strokeStyle=C.rule;x.beginPath();x.moveTo(P.l,yy);x.lineTo(P.l+iw,yy);x.stroke();x.fillStyle=C.muted;x.fillText(fmt(v,yt.step),P.l-7,yy);}
+  x.textAlign='center';x.textBaseline='top';
+  const xtick=(v,lab)=>{const xx=Math.round(X(v))+.5;x.strokeStyle=C.rule;x.beginPath();x.moveTo(xx,P.t);x.lineTo(xx,P.t+ih);x.stroke();x.fillStyle=C.muted;x.fillText(lab,xx,P.t+ih+6);};
+  if(o.xlog){for(let e=Math.ceil(Math.log10(x0)-1e-9);e<=Math.floor(Math.log10(x1)+1e-9);e++)xtick(10**e,'10'+sup(e));}
+  else{const xt=niceTicks(x0,x1,Math.max(3,Math.min(8,Math.floor(iw/70))));for(const v of xt.t)xtick(v,fmt(v,xt.step));}
+  x.fillStyle=C.ink;x.font=`italic 13px ${UI}`;x.textBaseline='alphabetic';x.fillText(o.xlabel,P.l+iw/2,h-6);
+  x.save();x.translate(14,P.t+ih/2);x.rotate(-Math.PI/2);x.fillText(o.ylabel,0,0);x.restore();
+  x.save();x.beginPath();x.rect(P.l,P.t,iw,ih);x.clip();
+  for(const s of o.series){
+    const col=C[s.color]||s.color;x.strokeStyle=col;x.fillStyle=col;x.globalAlpha=s.alpha??1;x.lineWidth=s.width||1.6;x.setLineDash(s.dash||[]);
+    if(s.err){x.lineWidth=1;for(const[a,lo,hi]of s.err){x.beginPath();x.moveTo(X(a),Y(lo));x.lineTo(X(a),Y(hi));x.stroke();}x.lineWidth=s.width||1.6;}
+    const r=s.r||3.2;
+    if(s.kind==='line'){x.beginPath();let st=false;for(const[a,b]of s.pts){if(!isFinite(b)){st=false;continue;}st?x.lineTo(X(a),Y(b)):x.moveTo(X(a),Y(b));st=true;}x.stroke();}
+    else if(s.kind==='pix'){const z=s.r||2;for(const[a,b]of s.pts)x.fillRect(X(a)-z/2,Y(b)-z/2,z,z);}
+    else for(const[a,b]of s.pts){const px=X(a),py=Y(b);x.beginPath();
+      if(s.kind==='dot'){x.arc(px,py,r,0,7);x.fill();}
+      else if(s.kind==='ring'){x.lineWidth=1.3;x.arc(px,py,r+1,0,7);x.stroke();}
+      else if(s.kind==='plus'){x.lineWidth=1.3;x.moveTo(px-r,py);x.lineTo(px+r,py);x.moveTo(px,py-r);x.lineTo(px,py+r);x.stroke();}
+      else if(s.kind==='cross'){x.lineWidth=1.3;const q=r*.8;x.moveTo(px-q,py-q);x.lineTo(px+q,py+q);x.moveTo(px-q,py+q);x.lineTo(px+q,py-q);x.stroke();}
+      else if(s.kind==='diamond'){x.moveTo(px,py-r);x.lineTo(px+r,py);x.lineTo(px,py+r);x.lineTo(px-r,py);x.closePath();s.fill?x.fill():(x.lineWidth=1.2,x.stroke());}
+      else if(s.kind==='vline'){x.setLineDash([2,4]);x.lineWidth=1;x.moveTo(px,P.t);x.lineTo(px,P.t+ih);x.stroke();}
+    }
+    x.globalAlpha=1;x.setLineDash([]);
+  }
+  x.restore();
+}
+function drawRing(c,g,leftColor,msg){
+  if(!g){const{x,w,h}=prep(c),C=css();x.fillStyle=C.muted;x.font=`14px ${UI}`;x.textAlign='center';x.textBaseline='middle';
+    const lines=msg||[];lines.forEach((t,i)=>x.fillText(t,w/2,h/2+(i-(lines.length-1)/2)*20));
+    x.strokeStyle=C.rule;x.setLineDash([4,4]);x.beginPath();x.arc(w/2,h/2,Math.min(w,h)/2-12,0,7);x.stroke();x.setLineDash([]);return;}
+  const{x,w,h}=prep(c),C=css(),n=g.n;const R=Math.min(w,h)/2-12,cx=w/2,cy=h/2;
+  const P=[];for(let i=0;i<n;i++){const a=-Math.PI/2+2*Math.PI*i/n;P.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+  const core=g.edges.filter(e=>e[2]==='ring'||e[2]==='diam'),ext=g.edges.filter(e=>e[2]==='extra'||e[2]==='left');
+  x.strokeStyle=C.ink;x.lineWidth=1;x.globalAlpha=Math.max(.12,Math.min(.55,9/Math.sqrt(g.m)));
+  x.beginPath();for(const[u,v]of core){x.moveTo(...P[u]);x.lineTo(...P[v]);}x.stroke();
+  x.globalAlpha=1;x.lineWidth=2.2;
+  for(const[u,v,t]of ext){x.strokeStyle=t==='extra'?C.rand:C[leftColor];x.beginPath();x.moveTo(...P[u]);x.lineTo(...P[v]);x.stroke();}
+  const nr=Math.max(2.6,Math.min(5.5,70/n));
+  for(const[a,b]of P){x.beginPath();x.arc(a,b,nr+1.5,0,7);x.fillStyle=C.plane;x.fill();x.beginPath();x.arc(a,b,nr,0,7);x.fillStyle=C.ink;x.fill();}
+}
+
+/* async chunked runner with cancellation */
+const tokens={};
+function runAsync(key,total,step,prog,done){
+  const t=(tokens[key]=(tokens[key]||0)+1);let i=0;
+  (function tick(){if(tokens[key]!==t)return;const end=performance.now()+16;while(i<total&&performance.now()<end)step(i++);
+    prog&&prog(i/total);if(i<total)setTimeout(tick,0);else done&&done();})();
+}
+const redraws=[];const $=id=>document.getElementById(id);
+const f3=v=>isFinite(v)?v.toFixed(3):'–';
+
+/* ---------- §2 hero ---------- */
+const H={g1:null,g2:null};
+function heroBuild(resampleOnly){
+  const n=+$('hn').value;const mEl=$('hm');const mMax=n*(n-1)/2;mEl.min=n;mEl.max=mMax;
+  let m=Math.min(Math.max(+mEl.value,n),mMax);mEl.value=m;
+  $('hnO').textContent=n;$('hmO').textContent=m;
+  H.g1=OH(n,m);if(!resampleOnly)H.g2=XH(n,m);
+  const{r,q,cs}=H.g1;
+  const put=(g,pre)=>{$(pre+'C').textContent=g?f3(clustering(g)):'–';$(pre+'L').textContent=g?f3(pathLength(g)):'–';$(pre+'M').textContent=g?g.m:'–';};
+  if(r%2===0){const p=2*m/(n*r)-1;H.p=p;H.g3=ONW(n,r,p);H.g4=XNW(n,r,p);
+    $('nwRow').innerHTML=`Corresponding Newman–Watts graph: <i>k</i><sub>init</sub> = ${r}, <i>p</i> = 2·${m}/(${n}·${r}) − 1 = ${p.toPrecision(4)}, expected <i>m</i> = ${m}`;
+    $('onwSub').textContent='Shortcuts between uniformly random pairs';$('xnwSub').textContent='Shortcuts must start at a ring-edge endpoint';}
+  else{H.g3=H.g4=null;$('nwRow').innerHTML=`No corresponding Newman–Watts graph: r = ${r} is odd, so the Harary core contains diameters`;
+    $('onwSub').textContent=$('xnwSub').textContent='Needs an even r';}
+  put(H.g1,'oh');put(H.g2,'xh');put(H.g3,'on');put(H.g4,'xn');const sub=a=>`H<sub>${a}</sub>`;
+  const txt={
+    '1a':`2m/n = ${r} exactly and r is even: the ring ${sub(r)}. Nothing random, and both versions agree.`,
+    '1b':`2m/n = ${r} exactly and r is odd: the ring ${sub(r-1)} plus the ${n/2} diameters. Deterministic; both versions agree.`,
+    '2':`2m mod n = 1: ${sub(r-1)} plus ${(n+1)/2} near-diameters, leaving one node with degree ${r+1}. Deterministic up to which node is special.`,
+    '3a':`2m mod n = ${q}, even: build ${sub(r)}, then place the remaining ${q/2} edge${q/2>1?'s':''} uniformly at random. NetworkX puts ${q/2>1?'them':'it'} in fixed positions instead.`,
+    '3b':`2m mod n = ${q}, odd: build the case-2 graph, then place the remaining ${(q-1)/2} edge${(q-1)/2!==1?'s':''} uniformly at random. NetworkX puts them in fixed positions instead.`
+  }[cs];
+  $('hCase').innerHTML=`<span class="tag">case ${cs}</span>r = ⌊2m/n⌋ = ${r}. ${txt}`;
+  $('hRe').disabled=!(cs==='3a'||cs==='3b'||(H.g3&&H.p>0));
+  heroDraw();eqMapping();
+}
+function heroDraw(){drawRing($('cvOH'),H.g1,'nx');drawRing($('cvXH'),H.g2,'nx');
+  const msg=[`r = ${H.g1.r} is odd`,'pick m with ⌊2m/n⌋ even'];
+  drawRing($('cvONW'),H.g3,'nx',msg);drawRing($('cvXNW'),H.g4,'nx',msg);}
+$('hn').addEventListener('input',()=>heroBuild(false));
+$('hm').addEventListener('input',()=>heroBuild(false));
+$('hRe').addEventListener('click',()=>heroBuild(true));
+redraws.push(heroDraw);
+
+/* ---------- Fig 2 cloud ---------- */
+const CL={x:[],o:[]};
+function cloudDraw(){
+  const opt={xlim:[0.4,1.0],ylim:[1,4.6],xlabel:'average clustering C',ylabel:'average path length L'};
+  chart($('cvCloudX'),{...opt,series:[{kind:'pix',pts:CL.x,color:'nx',r:2.4,alpha:.9}]});
+  chart($('cvCloudO'),{...opt,series:[{kind:'pix',pts:CL.o,color:'orig',r:2,alpha:.3}]});
+}
+function cloudRun(){
+  CL.x=[];CL.o=[];const n=64,M0=256,M1=2015,NM=M1-M0+1,R=10,total=NM*(1+R);
+  runAsync('cloud',total,i=>{
+    const mi=i%NM,rep=Math.floor(i/NM),m=M0+mi;
+    const g=rep===0?XH(n,m):OH(n,m);const pt=[clustering(g),pathLength(g)];
+    (rep===0?CL.x:CL.o).push(pt);
+  },f=>{$('cloudProg').textContent=f<1?`Generating… ${Math.round(f*100)}%`:`Done: ${CL.x.length.toLocaleString()} XH and ${CL.o.length.toLocaleString()} OH graphs.`;cloudDraw();});
+}
+$('cloudRun').addEventListener('click',cloudRun);
+redraws.push(cloudDraw);
+
+/* ---------- §3 degree distributions ---------- */
+const D={ho:null,hx:null,n:100,k:4};
+function degRun(){
+  const n=+$('dn').value;const dk=$('dk');dk.max=Math.max(2,Math.floor(0.6*n/2)*2);
+  const k=Math.min(+dk.value,+dk.max);dk.value=k;const p=+$('dp').value;
+  $('dnO').textContent=n;$('dkO').textContent=k;$('dpO').textContent=p.toFixed(2);
+  const s=k/(n-1-k);$('dS').textContent=s.toFixed(3);
+  $('dMsg').innerHTML=`The paper’s binomial argument predicts the original model is broader when s &lt; 2/3 and the NetworkX one when s &gt; 2/3${p<1?' (derived at p = 1)':''}. Here s ${s<2/3?'&lt;':'&gt;'} 2/3, so the prediction is: <b>${s<2/3?'ONW':'XNW'} broader</b>.`;
+  D.ho=new Float64Array(n);D.hx=new Float64Array(n);D.n=n;D.k=k;const R=Math.max(60,Math.round(24000/n));
+  runAsync('deg',2*R,i=>{const g=i%2?XNW(n,k,p):ONW(n,k,p);const h=i%2?D.hx:D.ho;for(let v=0;v<n;v++)h[g.deg[v]]++;},
+    ()=>{degStats();degDraw();});
+}
+function sd(h){let t=0,s=0,s2=0;h.forEach((c,d)=>{t+=c;s+=c*d;s2+=c*d*d;});const mu=s/t;return{t,mu,sd:Math.sqrt(Math.max(0,s2/t-mu*mu))};}
+function degStats(){
+  const a=sd(D.ho),b=sd(D.hx);$('dSo').textContent=a.sd.toFixed(2);$('dSx').textContent=b.sd.toFixed(2);
+  const pc=(h,t)=>(100*h[D.k]/t).toFixed(1)+'%';$('dKeep').textContent=`${pc(D.ho,a.t)} / ${pc(D.hx,b.t)}`;
+}
+function degDraw(){
+  if(!D.ho)return;const n=D.n;const a=sd(D.ho).t||1,b=sd(D.hx).t||1;
+  let lo=n,hi=0,ym=0;for(let d=0;d<n;d++){if(D.ho[d]||D.hx[d]){lo=Math.min(lo,d);hi=Math.max(hi,d);}ym=Math.max(ym,D.ho[d]/a,D.hx[d]/b);}
+  lo=Math.max(0,Math.min(lo,D.k)-2);hi=Math.min(n-1,hi+2);if(hi-lo<6)hi=lo+6;
+  const po=[],px=[];for(let d=lo;d<=hi;d++){po.push([d,D.ho[d]/a]);px.push([d,D.hx[d]/b]);}
+  chart($('cvDeg'),{xlim:[lo,hi],ylim:[0,(ym||1)*1.12],xlabel:'degree k',ylabel:'p(k)',series:[
+    {kind:'vline',pts:[[D.k,0]],color:'muted'},
+    {kind:'line',pts:po,color:'orig',width:2},
+    {kind:'line',pts:px,color:'nx',width:2,dash:[6,4]}]});
+}
+let degT;['dn','dk','dp'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(degT);degT=setTimeout(degRun,120);}));
+redraws.push(degDraw);
+
+/* ---------- §3.4 clustering vs p ---------- */
+function eq6(n,k,p,terms){
+  const s=k*p/(n-1-k);let num=n*k/4*(k/2-1);
+  if(terms>=2)num+=(k/2+1)*(k/4)*s*n;
+  if(terms>=3)num+=(k*k*p*p/2)*(k/n)*n+(k*k*p*p/2)*(1-k/n)*s*n;
+  const den=.5*n*k*(k-1)+n*k*k*p+.5*n*k*k*p*p;return 3*num/den;
+}
+const CS={};
+function clRun(){
+  const n=100,k=+$('ck').value,NP=21,R=30;const ps=[...Array(NP)].map((_,i)=>10**(-4+4*i/(NP-1)));
+  CS.n=n;CS.k=k;CS.ps=ps;CS.C0=3*(k-2)/(4*(k-1));const r0=new G(n);ring(r0,k/2);CS.L0=pathLength(r0);
+  CS.acc=[0,1].map(()=>ps.map(()=>({c:0,c2:0,l:0,t:0})));
+  runAsync('cl',NP*2*R,i=>{const pi=i%NP,mod=Math.floor(i/NP)%2;const g=mod?XNW(n,k,ps[pi]):ONW(n,k,ps[pi]);
+    const a=CS.acc[mod][pi],c=clustering(g)/CS.C0;a.c+=c;a.c2+=c*c;a.t++;if($('cL').checked||true)a.l+=pathLength(g)/CS.L0;},
+    f=>{$('clProg').textContent=f<1?`Simulating… ${Math.round(f*100)}%`:`${R} graphs per point and model`;clDraw();});
+}
+function clDraw(){
+  if(!CS.acc)return;const{n,k,ps}=CS;const showL=$('cL').checked;$('lLeg').hidden=!showL;
+  const th=[];for(let i=0;i<=120;i++)th.push(10**(-4+4*i/120));
+  const T=t=>th.map(p=>[p,eq6(n,k,p,t)/eq6(n,k,0,t)]);
+  const pts=m=>ps.map((p,i)=>{const a=CS.acc[m][i];return a.t?[p*(m?1.12:1),a.c/a.t]:null;}).filter(Boolean);
+  const err=ps.map((p,i)=>{const a=CS.acc[0][i];if(a.t<2)return null;const mu=a.c/a.t,s=Math.sqrt(Math.max(0,a.c2/a.t-mu*mu));return[p,mu-s,mu+s];}).filter(Boolean);
+  const Lp=m=>ps.map((p,i)=>{const a=CS.acc[m][i];return a.t?[p*(m?1.12:1),a.l/a.t]:null;}).filter(Boolean);
+  let ys=[1];for(const s of[T(1),T(2),T(3)])for(const[,y]of s)ys.push(y);for(const m of[0,1])for(const[,y]of pts(m))ys.push(y);
+  if(showL)for(const m of[0,1])for(const[,y]of Lp(m))ys.push(y);
+  ys=ys.filter(isFinite);let y0=Math.min(...ys),y1=Math.max(...ys);y0=Math.max(0,y0-.05);y1=Math.min(y1+.05,2.5);
+  const series=[
+    {kind:'line',pts:T(1),color:'muted',dash:[7,3,2,3],width:1.5},
+    {kind:'line',pts:T(2),color:'ink',dash:[2,3],width:1.5},
+    {kind:'line',pts:T(3),color:'ink',width:1.8},
+    {kind:'dot',pts:[],err,color:'orig',alpha:.55},
+    {kind:'dot',pts:pts(0),color:'orig',r:3.6},
+    {kind:'dot',pts:pts(1),color:'nx',r:2.4}];
+  if(showL){series.push({kind:'diamond',pts:Lp(0),color:'orig',r:4},{kind:'diamond',fill:true,pts:Lp(1),color:'nx',r:3});}
+  chart($('cvCl'),{xlog:true,xlim:[1e-4,1.2],ylim:[y0,y1],xlabel:'edge-addition probability p',ylabel:showL?'relative C and L':'C_p / C_0',series});
+}
+$('ck').addEventListener('change',clRun);$('cL').addEventListener('change',clDraw);
+redraws.push(clDraw);
+
+/* ---------- §4 equivalence ---------- */
+const EQ={};
+function eqRun(){
+  const n=50,r=+$('er').value,R=150,M0=n*r/2,NM=26;EQ.M0=M0;
+  const r0=new G(n);ring(r0,r/2);EQ.C0=clustering(r0);EQ.L0=pathLength(r0);
+  EQ.acc=[0,1].map(()=>[...Array(NM)].map(()=>({c:0,l:0,t:0})));
+  runAsync('eq',NM*2*R,i=>{const mi=i%NM,mod=Math.floor(i/NM)%2,m=M0+mi;
+    const g=mod?ONW(n,r,2*m/(n*r)-1):OH(n,m);const a=EQ.acc[mod][mi];a.c+=clustering(g)/EQ.C0;a.l+=pathLength(g)/EQ.L0;a.t++;},
+    f=>{$('eqProg').textContent=f<1?`Simulating… ${Math.round(f*100)}%`:`${R} graphs per point and model`;eqDraw();});
+}
+function eqDraw(){
+  if(!EQ.acc)return;const M0=EQ.M0;const S=(mod,key)=>EQ.acc[mod].map((a,i)=>a.t?[M0+i,a[key]/a.t]:null).filter(Boolean);
+  const all=[...S(0,'c'),...S(0,'l'),...S(1,'c'),...S(1,'l')].map(p=>p[1]);const lo=Math.min(1,...all);
+  chart($('cvEq'),{xlim:[M0-.8,M0+25.8],ylim:[Math.max(0,lo-.05),1.03],xlabel:'total number of edges m',ylabel:'relative C and L',series:[
+    {kind:'dot',pts:S(1,'c'),color:'orig',r:3.6},{kind:'cross',pts:S(1,'l'),color:'orig',r:5},
+    {kind:'ring',pts:S(0,'c'),color:'ink',r:4.2},{kind:'plus',pts:S(0,'l'),color:'ink',r:5}]});
+}
+function eqMapping(){
+  if(!H.g1)return;const n=+$('hn').value,m=+$('hm').value,{r}=H.g1;
+  $('eqMap').innerHTML=r%2===0
+    ?`Your Harary graph above (n = ${n}, m = ${m}, r = ${r}) is the same random graph as Newman–Watts with n = ${n}, k<sub>init</sub> = ${r}, p = 2·${m}/(${n}·${r}) − 1 = <b>${(2*m/(n*r)-1).toPrecision(4)}</b>.`
+    :`Your Harary graph above has odd r = ${r}, so its core includes diameters and it has no Newman–Watts counterpart. Pick m so that ⌊2m/n⌋ is even.`;
+}
+$('er').addEventListener('change',eqRun);
+redraws.push(eqDraw);
+
+/* ---------- legend swatches (drawn to match the charts) ---------- */
+function swatch(el){
+  const k=el.dataset.k,d=el.dataset.d||'',w=el.dataset.w||2,a=el.dataset.a||1,r=+(el.dataset.r||3.5),c='currentColor';
+  let body,W=26,Hh=12;
+  if(k==='line')body=`<line x1="0" y1="6" x2="26" y2="6" stroke="${c}" stroke-width="${w}" stroke-dasharray="${d}" opacity="${a}"/>`;
+  else if(k==='vline'){W=10;Hh=14;body=`<line x1="5" y1="0" x2="5" y2="14" stroke="${c}" stroke-width="1.2" stroke-dasharray="${d}"/>`;}
+  else{W=14;Hh=14;const m=7;
+    if(k==='dot')body=(el.dataset.err?`<line x1="7" y1="0" x2="7" y2="14" stroke="${c}" stroke-width="1" opacity=".55"/>`:'')+`<circle cx="7" cy="7" r="${r}" fill="${c}"/>`;
+    else if(k==='ring')body=`<circle cx="7" cy="7" r="${r+1}" fill="none" stroke="${c}" stroke-width="1.3"/>`;
+    else if(k==='plus')body=`<path d="M${m-r} 7H${m+r}M7 ${m-r}V${m+r}" stroke="${c}" stroke-width="1.3"/>`;
+    else if(k==='cross'){const q=r*.8;body=`<path d="M${m-q} ${m-q}L${m+q} ${m+q}M${m-q} ${m+q}L${m+q} ${m-q}" stroke="${c}" stroke-width="1.3"/>`;}
+    else if(k==='diamond')body=`<path d="M7 ${7-r}L${7+r} 7L7 ${7+r}L${7-r} 7Z" ${el.dataset.f?`fill="${c}"`:`fill="none" stroke="${c}" stroke-width="1.2"`}/>`;}
+  el.innerHTML=`<svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}" aria-hidden="true">${body}</svg>`;
+}
+document.querySelectorAll('i.sw').forEach(swatch);
+
+/* ---------- boot ---------- */
+heroBuild(false);degRun();clRun();eqRun();
+let cloudStarted=false;
+new IntersectionObserver((es,ob)=>{if(es.some(e=>e.isIntersecting)&&!cloudStarted){cloudStarted=true;cloudRun();ob.disconnect();}},{rootMargin:'200px'}).observe($('cloud'));
+cloudDraw();
+let rt;const redrawAll=()=>{clearTimeout(rt);rt=setTimeout(()=>redraws.forEach(f=>f()),60);};
+window.addEventListener('resize',redrawAll);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
+</body>
+</html>
