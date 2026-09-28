@@ -22,20 +22,6 @@ The paper makes three points, and the demo lets you check each one live in the b
 | Clustering turns back up | §3.4, Figs. 3a,c and 4 | Simulated *C*<sub>*p*</sub>/*C*<sub>0</sub> (and optionally *L*<sub>*p*</sub>/*L*<sub>0</sub>) for both versions against Eq. (6), its one-shortcut truncation, and Newman's approximation (A1). The full formula is shown on the page. |
 | The equivalence | §4, Fig. 5 | Relative clustering and path length of original Harary and original Newman–Watts graphs against *m*, for *r* ∈ {2, 4, 6, 8}. |
 
-### The clustering formula
-
-The analytic curve is Eq. (6) of the paper, normalized by its value at *p* = 0, *C*<sub>0</sub> = 3(*k*<sub>init</sub> − 2) / [4(*k*<sub>init</sub> − 1)]:
-
-```
-C_p = 3 · [ (n k/4)(k/2 − 1)
-          + (k/2 + 1)(k/4) · k p/(n − 1 − k) · n
-          + (k² p²/2)(k/n) · n
-          + (k² p²/2)(1 − k/n) · k p/(n − 1 − k) · n ]
-        / [ ½ n k (k − 1) + n k² p + ½ n k² p² ]          (k = k_init)
-```
-
-The numerator terms count triangles in the ring and triangles closed by one, two and three shortcuts. Keeping only the first term gives Newman's approximation, Eq. (A1); keeping the first two gives the one-shortcut curve.
-
 ## Implementation notes
 
 All generators and measurements are in plain JavaScript inside `index.html`.
