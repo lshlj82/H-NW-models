@@ -12,19 +12,6 @@ The paper makes three points, and the demo lets you check each one live in the b
 2. The **Newman–Watts model** (1999) adds shortcuts between uniformly random node pairs, but NetworkX's `newman_watts_strogatz_graph` forces each shortcut to start at an endpoint of a ring edge. This changes the degree distribution and, slightly, the clustering. The original model's clustering is also non-monotonic in *p*, which the paper's Eq. (6) captures.
 3. With an even connectivity *r*, the original Harary graph and the original Newman–Watts model are **the same random graph** under the mapping *k*<sub>init</sub> = *r*, *p* = 2*m*/(*nr*) − 1.
 
-## Running it
-
-There is nothing to build or install. Open `index.html` in a recent browser, or serve the folder with any static server:
-
-```bash
-python3 -m http.server
-# then visit http://localhost:8000
-```
-
-To host it on **GitHub Pages**, push this repository and enable Pages under *Settings → Pages* with the root of the main branch as the source.
-
-The page loads its two typefaces (Literata and Schibsted Grotesk) from Google Fonts and falls back to system fonts when offline. Formulas are written in MathML, which current versions of Chrome, Edge, Firefox and Safari render natively. There are no other external dependencies.
-
 ## What's on the page
 
 | Section | Paper | What you can do |
