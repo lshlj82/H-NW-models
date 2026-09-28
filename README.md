@@ -33,12 +33,6 @@ All generators and measurements are in plain JavaScript inside `index.html`.
 - **Measures.** *C* is the average local clustering coefficient, with nodes of degree below 2 counted as zero (as in `networkx.average_clustering`). *L* is the average shortest-path length over reachable pairs. Adjacency is stored as bitsets, so triangle counting and breadth-first search run on 32-bit words, which is what makes tens of thousands of graphs feasible in the browser.
 - Long simulations run in small time-sliced chunks so the page stays responsive, and they restart when you change a parameter.
 
-### Deviations and caveats
-
-- Eq. (A1) as printed in the paper gives the last denominator term as ½ *k*² *p*², without the factor *n* that appears in Eq. (6). This looks like a typo, so the demo uses Eq. (6)'s denominator for all three analytic curves.
-- The dotted "one-shortcut (Jo-type)" curve is Eq. (6) truncated after the one-shortcut term. This matches the paper's description of Jo's correction, but it has not been checked against the formula in Jo's thesis itself.
-- Simulation sample sizes are smaller than the paper's in some panels (for example 30 graphs per point instead of 500 for the clustering curves) to keep the page fast. Expect somewhat noisier points.
-
 ## References
 
 1. S. Son, E. J. Choi, S. H. Lee, *J. Korean Phys. Soc.* **83**, 879 (2023). [doi:10.1007/s40042-023-00921-8](https://doi.org/10.1007/s40042-023-00921-8)
