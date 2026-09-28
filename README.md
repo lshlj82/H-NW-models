@@ -4,6 +4,8 @@ An interactive, single-file web demo accompanying
 
 > S. Son, E. J. Choi, S. H. Lee, “Revisiting small-world network models: exploring technical realizations and the equivalence of the Newman–Watts and Harary models,” *Journal of the Korean Physical Society* **83**, 879–889 (2023). [doi:10.1007/s40042-023-00921-8](https://doi.org/10.1007/s40042-023-00921-8)
 
+This demo was created by **Claude Opus 5.5** (Anthropic), working from the paper.
+
 The paper makes three points, and the demo lets you check each one live in the browser:
 
 1. The **Harary graph** (1962) is stochastic in its original form, but NetworkX's `hnm_harary_graph` places the leftover edges deterministically, which shrinks the range of reachable (clustering, path length) values.
@@ -87,6 +89,10 @@ All generators and measurements are in plain JavaScript inside `index.html`.
   doi     = {10.1007/s40042-023-00921-8}
 }
 ```
+
+## Credits
+
+The demo code and this README were created by Claude Opus 5.5 (Anthropic). The models, formulas and findings are from Son, Choi and Lee (2023) and the works they cite.
 
 ## License
 
